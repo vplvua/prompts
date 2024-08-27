@@ -1,53 +1,25 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: multicontainer-app
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: multicontainer-app
-  template:
-    metadata:
-      labels:
-        app: multicontainer-app
-    spec:
-      containers:
-        - name: app-container-1
-          image: myapp/image1:latest
-          ports:
-            - containerPort: 80
-          resources:
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-            requests:
-              cpu: "250m"
-              memory: "256Mi"
-        - name: app-container-2
-          image: myapp/image2:latest
-          ports:
-            - containerPort: 8080
-          resources:
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-            requests:
-              cpu: "250m"
-              memory: "256Mi"
----
 apiVersion: v1
-kind: Service
+kind: Pod
 metadata:
-  name: multicontainer-app-service
+  name: app-multi-containers
 spec:
-  type: ClusterIP
-  selector:
-    app: multicontainer-app
-  ports:
-    - port: 80
-      targetPort: 80
-      name: http
-    - port: 8080
-      targetPort: 8080
-      name: http2
+  volumes:
+    - name: html
+      emptyDir: {}
+  containers:
+    - name: 1st
+      image: nginx
+      volumeMounts:
+        - name: html
+          mountPath: /usr/share/nginx/html
+    - name: 2nd
+      image: debian
+      volumeMounts:
+        - name: html
+          mountPath: /html
+      command: ["/bin/sh", "-c"]
+      args:
+        - while true; do
+          date >> /html/index.html;
+          sleep 1;
+          done
